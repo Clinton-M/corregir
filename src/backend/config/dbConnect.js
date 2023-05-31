@@ -1,32 +1,46 @@
-import mongoose from "mongoose";
+/**
+Source :
+https://github.com/vercel/next.js/blob/canary/examples/with-mongodb-mongoose/utils/dbConnect.js
+**/
+import mongoose from 'mongoose'
 
-// const dbConnect = () => {
-//   if (mongoose.connection.readyState >= 1) {
-//     return;
-//   }
-
-//   mongoose.set("strictQuery", false);
-//   mongoose.connect(process.env.MONGO_URI);
-//   console.log("Connected to MongoDB");
-// };
-
-// export default dbConnect; // thi not use asyn await
-
-const connectDB = async () => {
-  
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      //   useUnifiedTopology: true,
-      //   useNewUrlParser: true,
-      //   useCreateIndex: true,
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
+if (!process.env.MONGO_URI) {
+  throw new Error('Please add your MONGODB_URI to .env.local')
 }
 
+const MONGODB_URI = process.env.MONGO_URI
 
-export default connectDB;
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
+ */
+const globalWithMongoose = global
+
+let cached = globalWithMongoose.mongoose
+
+if (!cached) {
+  globalWithMongoose.mongoose = { conn: null, promise: null }
+  cached = globalWithMongoose.mongoose
+}
+
+async function dbConnect () {
+  if (cached.conn) {
+    return cached.conn
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false
+    }
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('connected to mongoDb')
+      return mongoose
+    })
+  }
+  cached.conn = await cached.promise
+  return cached.conn
+}
+
+export default dbConnect

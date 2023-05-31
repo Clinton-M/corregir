@@ -1,70 +1,27 @@
-
-// import {createRouter} from "next-connect";
-// import dbConnect from "@/backend/config/dbConnect";
-// import { newProduct } from "@/backend/controller/productControllers";
-// import { NextResponse } from "next/server";
-
-// const handler = createRouter();
-
-// dbConnect();
-
-// handler.post(newProduct);
-
-// export default handler;
-
-// export const config = {
-//     api: {
-//         bodyParser: false,
-//     },
-// };
-
-// export function middleware(req, ev) {
-
-//     if (req.method === "POST") {
-//         return NextResponse.next();
-//     }
-
-//     return NextResponse.next();
-// }
-
-
-
-
-
-import {createRouter} from "next-connect";
 import dbConnect from "@/backend/config/dbConnect";
-import { newProduct } from "@/backend/controller/productControllers";
+import Product from "@/backend/model/Product";
 import { NextResponse } from "next/server";
 
-
-
-export async function GET(){
-    const handler = createRouter();
-
-    dbConnect();
-
-    handler.post(newProduct);
-
-    return handler;
-}
-
-export async function POST(){
-
-    console.log(process.env.MONGO_URI)
-
-    const handler = createRouter();
-
-    dbConnect();
-
-    handler.post(newProduct);
+export async function POST (req) {
+  try {
     
+    await dbConnect()
+    
+    const product = new Product({
+    "name": "Beats Solo3 Wireless On-Ear Headphones",
+    "description": "The Beats Solo3 Wireless On-Ear Headphones are a premium set of headphones that feature Bluetooth connectivity, up to 40 hours of battery life, and on-ear controls for adjusting volume and switching tracks. They have a sleek, stylish design and come in a variety of colors. They also have a built-in microphone for taking calls and use the Apple W1 chip for easy and stable connectivity with Apple devices.",
+    "price": 199.95,
+    "seller": "Beats by Dr. Dre",
+    "stock": 500,
+    "category": "Headphones"
+  }
+  )
+  await product.save()
+  return NextResponse.json(product, {status: 200})
+  } catch(err) {
+    console.error(err)
+    return NextResponse.json({error: 'test'}, {status: 400})
+  }
 
-    return handler;
 
 }
-
-
-
-
-
-
